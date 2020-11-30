@@ -1,27 +1,42 @@
 package wtf.liempo.pregnancy
 
-import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.assets.AssetDescriptor
+import com.badlogic.gdx.assets.AssetManager
 import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
-
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
+import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
 
 class Game : KtxGame<KtxScreen>() {
-    private val batch by lazy { SpriteBatch() }
-    private val img by lazy { Texture("badlogic.jpg") }
 
-    override fun render() {
-        Gdx.gl.glClearColor(1f, 0f, 0f, 1f)
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
-        batch.begin()
-        batch.draw(img, 0f, 0f)
-        batch.end()
+    val assets by lazy { AssetManager() }
+
+    override fun create() {
+        super.create()
+
+        // Load common assets
+        assets.load(ASSET_BACKGROUND)
+        assets.finishLoading()
+
+        // Add the screens
+        addScreen(MainMenuScreen(this))
+
+        // Set MainMenuScreen to first screen
+        setScreen<MainMenuScreen>()
     }
 
     override fun dispose() {
-        batch.dispose()
-        img.dispose()
+        super.dispose()
+        assets.dispose()
+    }
+
+    companion object {
+        // Viewport size (correlates with size of background.png)
+        internal const val VP_HEIGHT = 1792F
+        internal const val VP_WIDTH = 1008F
+
+        // Asset descriptor for Game class (and its screens)
+        internal val ASSET_BACKGROUND = AssetDescriptor(
+                "background.png", Texture::class.java)
     }
 }

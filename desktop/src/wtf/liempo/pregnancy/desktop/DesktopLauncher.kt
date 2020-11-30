@@ -7,7 +7,10 @@ import wtf.liempo.pregnancy.Game
 object DesktopLauncher {
     @JvmStatic
     fun main(arg: Array<String>) {
-        val config = LwjglApplicationConfiguration()
-        LwjglApplication(Game(), config)
+        LwjglApplicationConfiguration().apply {
+            width = 360; height = 640; title = "Pregnancy"
+
+            LwjglApplication(Game(), this)
+        }
     }
 }
