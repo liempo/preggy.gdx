@@ -1,21 +1,30 @@
 package wtf.liempo.pregnancy
 
-import com.badlogic.gdx.assets.AssetDescriptor
 import com.badlogic.gdx.assets.AssetManager
+import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxGame
 import ktx.app.KtxScreen
+import ktx.assets.*
 import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
 
 class Game : KtxGame<KtxScreen>() {
+
+    val batch by lazy { SpriteBatch() }
+    val camera by lazy { OrthographicCamera() }
+    val viewport by lazy {
+        FillViewport(VP_WIDTH, VP_HEIGHT, camera)
+    }
 
     val assets by lazy { AssetManager() }
 
     override fun create() {
         super.create()
 
-        // Load common assets
-        assets.load(ASSET_BACKGROUND)
+        // Load common assets here
+        assets.load<Texture>(ASSET_BACKGROUND)
         assets.finishLoading()
 
         // Add the screens
@@ -36,7 +45,6 @@ class Game : KtxGame<KtxScreen>() {
         internal const val VP_WIDTH = 1008F
 
         // Asset descriptor for Game class (and its screens)
-        internal val ASSET_BACKGROUND = AssetDescriptor(
-                "background.png", Texture::class.java)
+        internal const val ASSET_BACKGROUND = "background.png"
     }
 }
