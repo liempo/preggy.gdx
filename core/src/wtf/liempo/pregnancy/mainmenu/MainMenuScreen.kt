@@ -42,6 +42,7 @@ class MainMenuScreen(private val game: Game): KtxScreen {
 
                 // Table children:
                 label("Pregnancy", style = "title")
+                row().pad(32f)
                 textButton("brick breaker")
             }
         }
