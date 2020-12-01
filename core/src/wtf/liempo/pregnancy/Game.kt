@@ -59,8 +59,8 @@ class Game : KtxGame<KtxScreen>() {
         internal const val VP_WIDTH = 1008F
 
         // Asset descriptor for Game class (and its screens)
-        internal const val TEXTURE_BG = "background.png"
-        internal const val FONT_FUTURA_TITLE = "futura_bold_italic.ttf"
-        internal const val FONT_FUTURA_HEADER = "futura_medium.ttf"
+        internal const val TEXTURE_BG = "common/background.png"
+        internal const val FONT_FUTURA_TITLE = "fonts/futura_bold_italic.ttf"
+        internal const val FONT_FUTURA_HEADER = "fonts/futura_medium.ttf"
     }
 }
