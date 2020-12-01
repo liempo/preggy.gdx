@@ -17,8 +17,7 @@ class Game : KtxGame<KtxScreen>() {
     // Important game attributes
     val assets by lazy { AssetManager() }
     val batch by lazy { SpriteBatch() }
-    val camera by lazy { OrthographicCamera() }
-    val viewport by lazy { FillViewport(VP_WIDTH, VP_HEIGHT, camera) }
+    val viewport by lazy { FillViewport(VP_WIDTH, VP_HEIGHT, OrthographicCamera()) }
 
     override fun create() {
         super.create()
@@ -48,6 +47,7 @@ class Game : KtxGame<KtxScreen>() {
         assets.dispose()
     }
 
+    @Suppress("unused")
     companion object {
 
         /** Return the relative position so I can use percentage (0.0 - 1.0) */

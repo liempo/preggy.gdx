@@ -9,7 +9,6 @@ object DesktopLauncher {
     fun main(arg: Array<String>) {
         LwjglApplicationConfiguration().apply {
             width = 360; height = 640; title = "Pregnancy"
-
             LwjglApplication(Game(), this)
         }
     }
