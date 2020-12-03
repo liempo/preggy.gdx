@@ -109,5 +109,6 @@ project(":core") {
 
         // LibKTX Box2D
         api "io.github.libktx:ktx-box2d:$ktxVersion"
+        api "io.github.libktx:ktx-math:$ktxVersion"
     }
 }

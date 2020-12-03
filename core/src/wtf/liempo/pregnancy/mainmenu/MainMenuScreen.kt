@@ -84,6 +84,7 @@ class MainMenuScreen(private val game: Game):
 
     override fun clicked(event: InputEvent?, x: Float, y: Float) {
         // TODO determine which button from event
+        game.removeScreen<MainMenuScreen>()
         game.setScreen<BreakoutScreen>()
     }
 
