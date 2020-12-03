@@ -21,7 +21,7 @@ class Game : KtxGame<KtxScreen>() {
 
         // Load common assets
         assets.run {
-            // Freetype fonts
+            // FreeType fonts
             registerFreeTypeFontLoaders()
             load<FreeTypeFontGenerator>(FONT_FUTURA_BOLD_ITALIC)
             load<FreeTypeFontGenerator>(FONT_FUTURA_MEDIUM)

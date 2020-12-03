@@ -40,7 +40,7 @@ class MainMenuScreen(private val game: Game):
     private val subtitle: BitmapFont by lazy {
         val generator: FreeTypeFontGenerator
            = game.assets[Game.FONT_FUTURA_MEDIUM]
-        generator.generateFont { size = 48 }
+        generator.generateFont { size = 72 }
     }
 
     override fun show() {
