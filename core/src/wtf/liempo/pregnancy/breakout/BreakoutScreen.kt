@@ -1,56 +1,70 @@
 package wtf.liempo.pregnancy.breakout
 
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.math.Vector2
-import com.badlogic.gdx.physics.box2d.BodyDef
+import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
+import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
-import ktx.box2d.*
-import ktx.graphics.use
+import ktx.box2d.body
+import ktx.box2d.box
+import ktx.box2d.createWorld
 import wtf.liempo.pregnancy.Game
 
 class BreakoutScreen(private val game: Game): KtxScreen {
 
-    // Box2D stuffs and renderer
-    private val world = createWorld(Vector2(0f, 0f))
-    private val debugRenderer = Box2DDebugRenderer()
+    private val camera = OrthographicCamera()
+    private val viewport = FillViewport(
+            translate(Game.GAME_WIDTH),
+            translate(Game.GAME_HEIGHT),
+            camera)
 
-    private val background: Texture =
-            game.assets[Game.TEXTURE_BG]
+    private val world = createWorld()
+    private var accumulator = 0f
 
+    private val renderer = Box2DDebugRenderer()
 
     override fun show() {
-        val ground = world.body {
-            type = BodyDef.BodyType.StaticBody
-            position.set(Vector2(0f, 0f))
 
-            // Not sure but let's try 9 as width
-            box(width = 1f, height = 1f) {
+        // Setup the bodies
+        val ceiling = world.body {
+            position.set(0f, translate(Game.GAME_HEIGHT))
+
+            box (translate(Game.GAME_WIDTH * 2), translate(20f)) {
                 density = 1f
             }
-
-        }
-
-        val fixture = ground.box(width = 1f, height = 1f){
-            density = 1f
         }
     }
 
     override fun render(delta: Float) {
-        debugRenderer.render(world, game.viewport.camera.combined)
+        renderer.render(world, camera.combined)
 
-        world.step(1/60f, 6, 2)
-
-        game.batch.use {
-            it.draw(background, 0f, 0f)
+        // Step world code snippet (not sure what's going on here)
+        accumulator += delta.coerceAtMost(0.25f)
+        if (accumulator >= TIME_STEP) {
+            accumulator -= TIME_STEP
+            world.step(TIME_STEP,
+                    VELOCITY_ITERATIONS,
+                    POSITION_ITERATIONS)
         }
+    }
+
+    override fun resize(width: Int, height: Int) {
+        viewport.update(width, height, true)
     }
 
     companion object {
 
-        // This variables determines the pixel per meter,
-        // will be used to scale down the World (Box2D)
-        private const val PPM = 100
+        // Translates pixels into world units (meters)
+        private fun translate(pixels: Float) = pixels / PIXELS_PER_METER
+
+        // These variables determine how objects are
+        // gonna scale in our orthographic camera
+        private const val SCALE = 2f
+        private const val PIXELS_PER_METER = 32f
+
+        // World stepping variables
+        private const val TIME_STEP = 1f / 60f
+        private const val VELOCITY_ITERATIONS = 6
+        private const val POSITION_ITERATIONS = 2
     }
 
 }
