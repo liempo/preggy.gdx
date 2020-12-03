@@ -3,7 +3,9 @@ package wtf.liempo.pregnancy.mainmenu
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import ktx.app.KtxScreen
 import ktx.graphics.use
 import ktx.scene2d.*
@@ -11,8 +13,9 @@ import ktx.style.label
 import ktx.style.skin
 import ktx.style.textButton
 import wtf.liempo.pregnancy.Game
+import wtf.liempo.pregnancy.breakout.BreakoutScreen
 
-class MainMenuScreen(private val game: Game): KtxScreen {
+class MainMenuScreen(private val game: Game): KtxScreen, ClickListener() {
 
     private val stage = Stage(game.viewport)
     private val background: Texture =
@@ -44,6 +47,7 @@ class MainMenuScreen(private val game: Game): KtxScreen {
                 label("Pregnancy", style = "title")
                 row().pad(32f)
                 textButton("breakout")
+                        .addListener(this@MainMenuScreen)
             }
         }
     }
@@ -55,6 +59,10 @@ class MainMenuScreen(private val game: Game): KtxScreen {
 
         stage.act()
         stage.draw()
+    }
+
+    override fun clicked(event: InputEvent?, x: Float, y: Float) {
+        game.setScreen<BreakoutScreen>()
     }
 
     override fun resize(width: Int, height: Int) {

@@ -10,6 +10,7 @@ import ktx.app.KtxGame
 import ktx.app.KtxScreen
 import ktx.assets.*
 import ktx.freetype.*
+import wtf.liempo.pregnancy.breakout.BreakoutScreen
 import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
 
 class Game : KtxGame<KtxScreen>() {
@@ -37,6 +38,7 @@ class Game : KtxGame<KtxScreen>() {
 
         // Add the screens
         addScreen(MainMenuScreen(this))
+        addScreen(BreakoutScreen(this))
 
         // Set MainMenuScreen to first screen
         setScreen<MainMenuScreen>()
