@@ -2,11 +2,16 @@ package wtf.liempo.pregnancy.mainmenu
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
+import com.badlogic.gdx.utils.viewport.ExtendViewport
 import ktx.app.KtxScreen
+import ktx.freetype.generateFont
 import ktx.graphics.use
 import ktx.scene2d.*
 import ktx.style.label
@@ -15,22 +20,38 @@ import ktx.style.textButton
 import wtf.liempo.pregnancy.Game
 import wtf.liempo.pregnancy.breakout.BreakoutScreen
 
-class MainMenuScreen(private val game: Game): KtxScreen, ClickListener() {
+class MainMenuScreen(private val game: Game):
+        KtxScreen, ClickListener() {
 
-    private val stage = Stage(game.viewport)
+    private val camera = OrthographicCamera()
+    private val viewport = ExtendViewport(
+            Game.GAME_WIDTH, Game.GAME_HEIGHT, camera)
+    private val stage = Stage(viewport)
+
     private val background: Texture =
             game.assets[Game.TEXTURE_BG]
 
+    private val title: BitmapFont by lazy {
+        val generator: FreeTypeFontGenerator
+                = game.assets[Game.FONT_FUTURA_BOLD_ITALIC]
+        generator.generateFont { size = 128 }
+    }
+
+    private val subtitle: BitmapFont by lazy {
+        val generator: FreeTypeFontGenerator
+           = game.assets[Game.FONT_FUTURA_MEDIUM]
+        generator.generateFont { size = 48 }
+    }
+
     override fun show() {
         // Initialize the default skin to be used by Scene2D
-        // TODO convert this shit to json for better (???)
         Scene2DSkin.defaultSkin = skin {
             label("title") {
-                font = game.assets[Game.FONT_FUTURA_TITLE]
+                font = title
             }
 
             textButton {
-                font = game.assets[Game.FONT_FUTURA_HEADER]
+                font = subtitle
                 fontColor = Color.valueOf("64113f")
                 downFontColor = Color.WHITE
             }
@@ -62,6 +83,7 @@ class MainMenuScreen(private val game: Game): KtxScreen, ClickListener() {
     }
 
     override fun clicked(event: InputEvent?, x: Float, y: Float) {
+        // TODO determine which button from event
         game.setScreen<BreakoutScreen>()
     }
 
