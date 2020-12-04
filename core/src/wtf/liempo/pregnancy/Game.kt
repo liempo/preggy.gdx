@@ -27,10 +27,10 @@ class Game : KtxGame<KtxScreen>() {
             load<FreeTypeFontGenerator>(FONT_FUTURA_MEDIUM)
 
             // Common textures
-            assets.load<Texture>(TEXTURE_BG)
+            load<Texture>(TEXTURE_BG)
 
             // Wait for finish
-            assets.finishLoading()
+            finishLoading()
         }
 
         // Add the screens
