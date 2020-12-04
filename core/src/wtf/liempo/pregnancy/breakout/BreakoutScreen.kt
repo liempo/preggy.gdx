@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.physics.box2d.Body
 import com.badlogic.gdx.physics.box2d.BodyDef
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
+import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
 import ktx.box2d.*
@@ -34,30 +35,10 @@ class BreakoutScreen(private val game: Game): KtxScreen {
     private lateinit var paddle: Body
 
     override fun show() {
-        // ---- SETUP THE WORLD SURROUNDINGS ----
-        //  Iterate SurroundingEdges and create a body for it
-        for (edge in SurroundingEdges.values()) {
-            world.body(BodyDef.BodyType.StaticBody) {
-                // Create the shape and fixture
-                edge(edge.start, edge.end) {
-                    density = 1f
-                    restitution = 1f
-                    friction = 100f
-
-                    // Setup the collision filter
-                    filter {
-                        categoryBits = BIT_WALL
-                        maskBits = BIT_BALL or BIT_PADDLE
-                    }
-                }
-            }
-        }
-
         // ---- SETUP ESSENTIAL BODIES ----
         ball = world.body(BodyDef.BodyType.DynamicBody) {
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT / 2))
-            userData = "ball"
 
             circle(radius = translate(32f)) {
                 restitution = 0.8f; density = 8f; friction = 0f
@@ -71,17 +52,48 @@ class BreakoutScreen(private val game: Game): KtxScreen {
         paddle = world.body(BodyDef.BodyType.DynamicBody) {
             // 10% above ground, and centered horizontally
             position.set(translate(GAME_WIDTH / 2),
-                    translate(GAME_HEIGHT * 0.10f))
+                    translate(GAME_HEIGHT * 0.20f))
 
             box(translate(128f), translate(32f)) {
                 restitution = 0.5f; density = 10f; friction = 0.4f
                 filter {
                     categoryBits = BIT_PADDLE
-                    maskBits = BIT_BALL or BIT_WALL
+                    maskBits = -1
                 }
             }
         }
 
+        // ---- SETUP THE WORLD SURROUNDINGS ----
+        //  Iterate SurroundingEdges and create a body for it
+        for (edge in SurroundingEdges.values()) {
+            world.body(BodyDef.BodyType.StaticBody) {
+                // Create the shape and fixture
+                edge(edge.start, edge.end) {
+                    density = 1f
+                    restitution = 1f
+                    friction = 100f
+
+                    filter {
+                        println(edge.name)
+                        // Set a different category bit for
+                        // FLOOR so a ball could pass through
+                        if (edge.name == "FLOOR") {
+                            categoryBits = BIT_FLOOR
+                            maskBits = BIT_PADDLE
+                        } else {
+                            categoryBits = BIT_WALL
+                            maskBits = BIT_BALL or BIT_PADDLE
+                        }
+                    }
+                }
+            }.also {
+                if (edge.name == "FLOOR") {
+                    paddle.prismaticJointWith(it) {
+                        collideConnected = true
+                    }
+                }
+            }
+        }
     }
 
     override fun render(delta: Float) {
@@ -114,10 +126,11 @@ class BreakoutScreen(private val game: Game): KtxScreen {
 
         // Category bits for collision filtering
         // Read more here https://bit.ly/2VArJdX
-        private const val BIT_WALL: Short = 0x0002
-        private const val BIT_PADDLE: Short = 0x0004
-        private const val BIT_BALL: Short = 0x0008
-        private const val BIT_BRICK: Short = 0x000A
+        private const val BIT_WALL: Short = 2
+        private const val BIT_PADDLE: Short = 4
+        private const val BIT_FLOOR: Short = 6
+        private const val BIT_BALL: Short = 8
+        private const val BIT_BRICK: Short = 10
     }
 
 }
