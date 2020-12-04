@@ -1,5 +1,7 @@
 package wtf.liempo.pregnancy.breakout
 
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputAdapter
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.physics.box2d.Body
 import com.badlogic.gdx.physics.box2d.BodyDef
@@ -8,15 +10,16 @@ import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
 import ktx.box2d.*
-import ktx.graphics.use
 import ktx.math.vec2
+import ktx.math.vec3
 import wtf.liempo.pregnancy.Game
 import wtf.liempo.pregnancy.Game.Companion.GAME_HEIGHT
 import wtf.liempo.pregnancy.Game.Companion.GAME_WIDTH
 import wtf.liempo.pregnancy.breakout.BreakoutUtils.translate
 import kotlin.experimental.or
 
-class BreakoutScreen(private val game: Game): KtxScreen {
+class BreakoutScreen(private val game: Game):
+        KtxScreen, InputAdapter() {
 
     // Screen and camera management
     private val camera = OrthographicCamera()
@@ -86,14 +89,22 @@ class BreakoutScreen(private val game: Game): KtxScreen {
                         }
                     }
                 }
-            }.also {
+            }.also { ground ->
                 if (edge.name == "FLOOR") {
-                    paddle.prismaticJointWith(it) {
+                    // Create a PrismaticJoint (in a Java way)
+                    // LibKTX behaves in a naughty naughty way
+                    val def = PrismaticJointDef().apply {
+                        initialize(ground, paddle,
+                                paddle.worldCenter,
+                                vec2(x = 1f))
                         collideConnected = true
-                    }
+                    }; world.createJoint(def)
                 }
             }
         }
+
+        // ---- MISCELLANEOUS STUFF ----
+        Gdx.input.inputProcessor = this
     }
 
     override fun render(delta: Float) {
@@ -106,11 +117,6 @@ class BreakoutScreen(private val game: Game): KtxScreen {
             world.step(TIME_STEP,
                     VELOCITY_ITERATIONS,
                     POSITION_ITERATIONS)
-        }
-
-        // Render textures here
-        game.batch.use {
-
         }
     }
 
@@ -133,4 +139,27 @@ class BreakoutScreen(private val game: Game): KtxScreen {
         private const val BIT_BRICK: Short = 10
     }
 
+    override fun touchUp(screenX: Int, screenY: Int,
+                         pointer: Int, button: Int): Boolean {
+        // Stop the paddle from moving
+        paddle.setLinearVelocity(0f, 0f)
+        return false
+    }
+
+    override fun touchDown(screenX: Int, screenY: Int,
+                           pointer: Int, button: Int): Boolean {
+        // Get world space coordinates (in meters) and extract X
+        val touchX = camera.unproject(vec3(
+                x = screenX.toFloat(),
+                y = screenY.toFloat())).x
+        // Get X axis center of the screen (in meters)
+        val centerX = translate(GAME_WIDTH) / 2
+
+        // Determine whether paddle goes left or right
+        val speed = 512f * if (touchX >= centerX) 1 else -1
+
+        // Move the paddle with created velocity
+        paddle.linearVelocity = vec2(x = translate(speed))
+        return true
+    }
 }
