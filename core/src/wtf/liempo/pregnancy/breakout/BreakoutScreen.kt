@@ -3,6 +3,7 @@ package wtf.liempo.pregnancy.breakout
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputAdapter
 import com.badlogic.gdx.graphics.OrthographicCamera
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.physics.box2d.Body
 import com.badlogic.gdx.physics.box2d.BodyDef
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
@@ -10,6 +11,7 @@ import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
 import ktx.box2d.*
+import ktx.graphics.use
 import ktx.math.vec2
 import ktx.math.vec3
 import wtf.liempo.pregnancy.Game
@@ -108,6 +110,20 @@ class BreakoutScreen(private val game: Game):
     }
 
     override fun render(delta: Float) {
+        // Render textures here
+        game.run {
+            // Extract assets to render
+            val background: Texture = assets[Game.TEXTURE_BG]
+
+            // Draw using SpriteBatch
+            batch.use(camera) {
+                it.draw(background, 0f, 0f,
+                        translate(GAME_WIDTH),
+                        translate(GAME_HEIGHT))
+            }
+        }
+
+        // Render the Box2D debugger
         renderer.render(world, camera.combined)
 
         // Step world code snippet (not sure what's going on here)
@@ -122,21 +138,6 @@ class BreakoutScreen(private val game: Game):
 
     override fun resize(width: Int, height: Int) {
         viewport.update(width, height, true)
-    }
-
-    companion object {
-        // World stepping variables
-        private const val TIME_STEP = 1f / 60f
-        private const val VELOCITY_ITERATIONS = 6
-        private const val POSITION_ITERATIONS = 2
-
-        // Category bits for collision filtering
-        // Read more here https://bit.ly/2VArJdX
-        private const val BIT_WALL: Short = 2
-        private const val BIT_PADDLE: Short = 4
-        private const val BIT_FLOOR: Short = 6
-        private const val BIT_BALL: Short = 8
-        private const val BIT_BRICK: Short = 10
     }
 
     override fun touchUp(screenX: Int, screenY: Int,
@@ -161,5 +162,20 @@ class BreakoutScreen(private val game: Game):
         // Move the paddle with created velocity
         paddle.linearVelocity = vec2(x = translate(speed))
         return true
+    }
+
+    companion object {
+        // World stepping variables
+        private const val TIME_STEP = 1f / 60f
+        private const val VELOCITY_ITERATIONS = 6
+        private const val POSITION_ITERATIONS = 2
+
+        // Category bits for collision filtering
+        // Read more here https://bit.ly/2VArJdX
+        private const val BIT_WALL: Short = 2
+        private const val BIT_PADDLE: Short = 4
+        private const val BIT_FLOOR: Short = 6
+        private const val BIT_BALL: Short = 8
+        private const val BIT_BRICK: Short = 10
     }
 }
