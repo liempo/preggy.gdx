@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
-import com.badlogic.gdx.utils.viewport.ExtendViewport
+import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
 import ktx.freetype.generateFont
 import ktx.graphics.use
@@ -24,7 +24,7 @@ class MainMenuScreen(private val game: Game):
         KtxScreen, ClickListener() {
 
     private val camera = OrthographicCamera()
-    private val viewport = ExtendViewport(
+    private val viewport = FillViewport(
             Game.GAME_WIDTH, Game.GAME_HEIGHT, camera)
     private val stage = Stage(viewport)
 
