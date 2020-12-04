@@ -54,16 +54,30 @@ class BreakoutScreen(private val game: Game): KtxScreen {
         }
 
         // ---- SETUP ESSENTIAL BODIES ----
-        ball = world.body {
-            type = BodyDef.BodyType.DynamicBody
+        ball = world.body(BodyDef.BodyType.DynamicBody) {
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT / 2))
+            userData = "ball"
 
-            circle(radius = translate(30f)) {
+            circle(radius = translate(32f)) {
                 restitution = 0.8f; density = 8f; friction = 0f
                 filter {
                     categoryBits = BIT_BALL
                     maskBits = BIT_PADDLE or BIT_WALL
+                }
+            }
+        }
+
+        paddle = world.body(BodyDef.BodyType.DynamicBody) {
+            // 10% above ground, and centered horizontally
+            position.set(translate(GAME_WIDTH / 2),
+                    translate(GAME_HEIGHT * 0.10f))
+
+            box(translate(128f), translate(32f)) {
+                restitution = 0.5f; density = 10f; friction = 0.4f
+                filter {
+                    categoryBits = BIT_PADDLE
+                    maskBits = BIT_BALL or BIT_WALL
                 }
             }
         }
