@@ -308,7 +308,7 @@ class BreakoutScreen(private val game: Game):
         private const val ID_BALL: Short = 8
         private const val ID_BRICK: Short = 10
 
-        // This game's asset names (will be loaded on MainMenuScreen)
+        // This game's asset names (will be loaded on externally)
         internal const val TEXTURE_BALL = "breakout/ball.png"
         internal const val TEXTURE_PADDLE = "breakout/paddle.png"
         internal const val TEXTURE_BRICK = "breakout/brick.png"
