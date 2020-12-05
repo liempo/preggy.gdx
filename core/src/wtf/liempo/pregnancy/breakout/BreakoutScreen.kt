@@ -44,13 +44,19 @@ class BreakoutScreen(private val game: Game):
     override fun show() {
         // ---- SETUP ESSENTIAL BODIES ----
         ball = world.body(BodyDef.BodyType.DynamicBody) {
+            // Radius of the ball in meters
+            val radius = translate(32f)
+
             // Center to the game screen
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT / 2))
-            // Set this body's user data to it's texture to render
-            userData = Sprite(game.assets.get<Texture>(TEXTURE_BALL))
 
-            circle(radius = translate(32f)) {
+            // Set this body's user data to it's texture filename
+            userData = Sprite(game.assets.get<Texture>(TEXTURE_BALL)).apply {
+                setSize(radius * 2f, radius * 2f)
+            }
+
+            circle(radius) {
                 restitution = 1f; density = 0.2f; friction = 0f
                 filter {
                     categoryBits = BIT_BALL
@@ -66,13 +72,18 @@ class BreakoutScreen(private val game: Game):
         }
 
         paddle = world.body(BodyDef.BodyType.DynamicBody) {
+            val width = translate(256f)
+            val height = translate(64f)
+
             // 10% above ground, and centered horizontally
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT * 0.20f))
-            // Set this body's user data to it's texture to render
-            userData = Sprite(game.assets.get<Texture>(TEXTURE_PADDLE))
+            // Set this body's user data to a sprite
+            userData = Sprite(game.assets.get<Texture>(TEXTURE_PADDLE)).apply {
+                setSize(width, height)
+            }
 
-            box(translate(128f), translate(32f)) {
+            box(width, height) {
                 restitution = 0.5f; density = 5f; friction = 0.4f
                 filter {
                     categoryBits = BIT_PADDLE
@@ -155,11 +166,15 @@ class BreakoutScreen(private val game: Game):
                 val bodies = gdxArrayOf<Body>()
                 world.getBodies(bodies)
                 for (body in bodies) {
-                    // Skip if userdata is null or not string
+                    // Skip if userdata is null or not Sprite
                     if (body.userData !is Sprite) continue
 
-                    val sprite = (body.userData as Sprite)
-                    sprite.setPosition(body.position.x, body.position.y)
+                    (body.userData as Sprite).apply {
+                        val x = body.position.x - width / 2
+                        val y = body.position.y - height / 2
+                        setPosition(x, y)
+                    }.draw(it)
+
                 }
             }
         }
