@@ -41,9 +41,8 @@ class BreakoutScreen(private val game: Game):
     private lateinit var ball: Body
     private lateinit var paddle: Body
 
-    override fun show() {
-        // ---- SETUP ESSENTIAL BODIES ----
-        ball = world.body(BodyDef.BodyType.DynamicBody) {
+    private fun createBall() {
+       ball = world.body(BodyDef.BodyType.DynamicBody) {
             // Radius of the ball in meters
             val radius = translate(32f)
 
@@ -54,7 +53,9 @@ class BreakoutScreen(private val game: Game):
             // Set this body's user data to sprite
             val texture: Texture = game.assets[TEXTURE_BALL]
             userData = Sprite(texture).apply {
-                setSize(radius * 2f, radius * 2f)
+                setSize(radius * 2f,
+                        radius * 2f)
+                setOriginCenter()
             }
 
             circle(radius) {
@@ -73,7 +74,9 @@ class BreakoutScreen(private val game: Game):
                     translate(GAME_HEIGHT / 2))
             it.applyLinearImpulse(impulse, point, true)
         }
+    }
 
+    private fun createPaddle() {
         paddle = world.body(BodyDef.BodyType.DynamicBody) {
             val width = translate(256f)
             val height = translate(64f)
@@ -85,6 +88,7 @@ class BreakoutScreen(private val game: Game):
             val texture: Texture = game.assets[TEXTURE_PADDLE]
             userData = Sprite(texture).apply {
                 setSize(width, height)
+                setOriginCenter()
             }
 
             box(width, height) {
@@ -97,28 +101,35 @@ class BreakoutScreen(private val game: Game):
                 }
             }
         }
+    }
 
-        val rows = 5; val columns = 5
-        val brickWidth = translate(72)
-        val brickHeight = translate(72)
+    private fun createBricks() {
+        val rows = 5; val columns = 12
+        val width = translate(72)
+        val height = translate(72)
+        val offsetX = (width / 2) + // <--- We add this because box2d draw from center
+                (translate(GAME_WIDTH) - (columns * width)) / 2
+        val offsetY = translate(GAME_HEIGHT * 0.95f)
 
-        // TODO create an offset
-        var brickY = translate(GAME_HEIGHT) - brickHeight
+        println("offsetX = $offsetX")
+        println("offsetY = $offsetY")
 
-        for (i in 0..rows) {
-            for (j in 0..columns) {
+        for (i in 0 until rows) {
+            for (j in 0 until columns) {
 
-                val brickX = (j * (brickWidth))
+                val x = offsetX + (j * width)
+                val y = offsetY - (i * height)
 
-                world.body(type = BodyDef.BodyType.StaticBody) {
-                    position.set(brickX, brickY)
+                world.body(BodyDef.BodyType.StaticBody) {
+                    position.set(x, y)
 
                     val texture: Texture = game.assets[TEXTURE_BRICK]
                     userData = Sprite(texture).apply {
-                        setSize(brickWidth, brickHeight)
+                        setSize(width, height)
+                        setOriginCenter()
                     }
 
-                    box(brickWidth, brickHeight) {
+                    box(width, height) {
                         restitution = 0.1f
                         density = 10f
                         friction = 0.4f
@@ -127,14 +138,13 @@ class BreakoutScreen(private val game: Game):
                             maskBits = BIT_BALL
                         }
                     }
-
                 }
             }
-
-            brickY += brickHeight * 2
         }
+    }
 
-        // ---- SETUP THE WORLD SURROUNDINGS ----
+    // WARNING: Must be called after paddle else a lateinit error
+    private fun createWalls() {
         //  Iterate SurroundingEdges and create a body for it
         for (edge in SurroundingEdges.values()) {
             world.body(BodyDef.BodyType.StaticBody) {
@@ -170,6 +180,14 @@ class BreakoutScreen(private val game: Game):
                 }
             }
         }
+    }
+
+    override fun show() {
+        // ---- SETUP WORLD BODIES ----
+        createBall()
+        createPaddle()
+        createBricks()
+        createWalls()
 
         // ---- MISCELLANEOUS STUFF ----
         Gdx.input.inputProcessor = this
@@ -195,9 +213,9 @@ class BreakoutScreen(private val game: Game):
                     if (body.userData !is Sprite) continue
 
                     (body.userData as Sprite).apply {
-                        val x = body.position.x - width / 2
-                        val y = body.position.y - height / 2
-                        setPosition(x, y)
+                        setOriginBasedPosition(
+                                body.position.x,
+                                body.position.y)
                     }.draw(it)
 
                 }
