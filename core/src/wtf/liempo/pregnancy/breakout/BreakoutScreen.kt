@@ -51,13 +51,16 @@ class BreakoutScreen(private val game: Game):
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT / 2))
 
-            // Set this body's user data to it's texture filename
-            userData = Sprite(game.assets.get<Texture>(TEXTURE_BALL)).apply {
+            // Set this body's user data to sprite
+            val texture: Texture = game.assets[TEXTURE_BALL]
+            userData = Sprite(texture).apply {
                 setSize(radius * 2f, radius * 2f)
             }
 
             circle(radius) {
-                restitution = 1f; density = 0.2f; friction = 0f
+                restitution = 1f
+                density = 0.2f
+                friction = 0f
                 filter {
                     categoryBits = BIT_BALL
                     maskBits = BIT_PADDLE or BIT_WALL
@@ -79,35 +82,57 @@ class BreakoutScreen(private val game: Game):
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT * 0.20f))
             // Set this body's user data to a sprite
-            userData = Sprite(game.assets.get<Texture>(TEXTURE_PADDLE)).apply {
+            val texture: Texture = game.assets[TEXTURE_PADDLE]
+            userData = Sprite(texture).apply {
                 setSize(width, height)
             }
 
             box(width, height) {
-                restitution = 0.5f; density = 5f; friction = 0.4f
+                restitution = 0.5f
+                density = 0.5f
+                friction = 0.4f
                 filter {
                     categoryBits = BIT_PADDLE
-                    maskBits = -1
+                    maskBits = BIT_BALL or BIT_WALL
                 }
             }
         }
 
-//        val rows = 5; val columns = 5
-//        val brickHeight = 128
-//
-//
-//        for (i in 0..rows) {
-//            for (j in 0..columns) {
-//
-//                val brickY = GAME_HEIGHT -
-//
-//                world.body(type = BodyDef.BodyType.StaticBody) {
-//
-//
-//                }
-//            }
-//        }
+        val rows = 5; val columns = 5
+        val brickWidth = translate(72)
+        val brickHeight = translate(72)
 
+        // TODO create an offset
+        var brickY = translate(GAME_HEIGHT) - brickHeight
+
+        for (i in 0..rows) {
+            for (j in 0..columns) {
+
+                val brickX = (j * (brickWidth))
+
+                world.body(type = BodyDef.BodyType.StaticBody) {
+                    position.set(brickX, brickY)
+
+                    val texture: Texture = game.assets[TEXTURE_BRICK]
+                    userData = Sprite(texture).apply {
+                        setSize(brickWidth, brickHeight)
+                    }
+
+                    box(brickWidth, brickHeight) {
+                        restitution = 0.1f
+                        density = 10f
+                        friction = 0.4f
+                        filter {
+                            categoryBits = BIT_BRICK
+                            maskBits = BIT_BALL
+                        }
+                    }
+
+                }
+            }
+
+            brickY += brickHeight * 2
+        }
 
         // ---- SETUP THE WORLD SURROUNDINGS ----
         //  Iterate SurroundingEdges and create a body for it
