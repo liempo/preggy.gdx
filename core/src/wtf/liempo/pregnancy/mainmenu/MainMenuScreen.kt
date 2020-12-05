@@ -70,7 +70,7 @@ class MainMenuScreen(private val game: Game):
                 row().pad(32f)
                 textButton("breakout") {
                     onClick { BreakoutUtils.show(game) }
-                }
+                }; row()
                 textButton("catch") {
 
                 }
