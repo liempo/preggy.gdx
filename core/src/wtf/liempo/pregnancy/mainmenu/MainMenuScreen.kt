@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
+import ktx.assets.load
 import ktx.freetype.generateFont
 import ktx.graphics.use
 import ktx.scene2d.*
@@ -84,8 +85,17 @@ class MainMenuScreen(private val game: Game):
 
     override fun clicked(event: InputEvent?, x: Float, y: Float) {
         // TODO determine which button from event
-        game.removeScreen<MainMenuScreen>()
-        game.setScreen<BreakoutScreen>()
+        game.run {
+            assets.let {
+                it.load<Texture>(BreakoutScreen.TEXTURE_PADDLE)
+                it.load<Texture>(BreakoutScreen.TEXTURE_BRICK)
+                it.load<Texture>(BreakoutScreen.TEXTURE_BALL)
+                it.finishLoading()
+            }
+
+            removeScreen<MainMenuScreen>()
+            setScreen<BreakoutScreen>()
+        }
     }
 
     override fun resize(width: Int, height: Int) {

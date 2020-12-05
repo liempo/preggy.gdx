@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputAdapter
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.Sprite
 import com.badlogic.gdx.physics.box2d.Body
 import com.badlogic.gdx.physics.box2d.BodyDef
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
@@ -11,6 +12,7 @@ import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
 import ktx.box2d.*
+import ktx.collections.gdxArrayOf
 import ktx.graphics.use
 import ktx.math.vec2
 import ktx.math.vec3
@@ -42,31 +44,59 @@ class BreakoutScreen(private val game: Game):
     override fun show() {
         // ---- SETUP ESSENTIAL BODIES ----
         ball = world.body(BodyDef.BodyType.DynamicBody) {
+            // Center to the game screen
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT / 2))
+            // Set this body's user data to it's texture to render
+            userData = Sprite(game.assets.get<Texture>(TEXTURE_BALL))
 
             circle(radius = translate(32f)) {
-                restitution = 0.8f; density = 8f; friction = 0f
+                restitution = 1f; density = 0.2f; friction = 0f
                 filter {
                     categoryBits = BIT_BALL
                     maskBits = BIT_PADDLE or BIT_WALL
                 }
             }
+        }.also {
+            // Create initial force for the ball
+            val impulse = vec2(0f, translate(-512f))
+            val point = vec2(translate(GAME_WIDTH / 2),
+                    translate(GAME_HEIGHT / 2))
+            it.applyLinearImpulse(impulse, point, true)
         }
 
         paddle = world.body(BodyDef.BodyType.DynamicBody) {
             // 10% above ground, and centered horizontally
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT * 0.20f))
+            // Set this body's user data to it's texture to render
+            userData = Sprite(game.assets.get<Texture>(TEXTURE_PADDLE))
 
             box(translate(128f), translate(32f)) {
-                restitution = 0.5f; density = 10f; friction = 0.4f
+                restitution = 0.5f; density = 5f; friction = 0.4f
                 filter {
                     categoryBits = BIT_PADDLE
                     maskBits = -1
                 }
             }
         }
+
+//        val rows = 5; val columns = 5
+//        val brickHeight = 128
+//
+//
+//        for (i in 0..rows) {
+//            for (j in 0..columns) {
+//
+//                val brickY = GAME_HEIGHT -
+//
+//                world.body(type = BodyDef.BodyType.StaticBody) {
+//
+//
+//                }
+//            }
+//        }
+
 
         // ---- SETUP THE WORLD SURROUNDINGS ----
         //  Iterate SurroundingEdges and create a body for it
@@ -120,6 +150,17 @@ class BreakoutScreen(private val game: Game):
                 it.draw(background, 0f, 0f,
                         translate(GAME_WIDTH),
                         translate(GAME_HEIGHT))
+
+                // Draw the sprites in the position of its bodies
+                val bodies = gdxArrayOf<Body>()
+                world.getBodies(bodies)
+                for (body in bodies) {
+                    // Skip if userdata is null or not string
+                    if (body.userData !is Sprite) continue
+
+                    val sprite = (body.userData as Sprite)
+                    sprite.setPosition(body.position.x, body.position.y)
+                }
             }
         }
 
@@ -177,5 +218,10 @@ class BreakoutScreen(private val game: Game):
         private const val BIT_FLOOR: Short = 6
         private const val BIT_BALL: Short = 8
         private const val BIT_BRICK: Short = 10
+
+        // This game's asset names (will be loaded on MainMenuScreen)
+        internal const val TEXTURE_BALL = "breakout/ball.png"
+        internal const val TEXTURE_PADDLE = "breakout/paddle.png"
+        internal const val TEXTURE_BRICK = "breakout/brick.png"
     }
 }
