@@ -5,9 +5,7 @@ import com.badlogic.gdx.InputAdapter
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.physics.box2d.Body
-import com.badlogic.gdx.physics.box2d.BodyDef
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
+import com.badlogic.gdx.physics.box2d.*
 import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
@@ -21,6 +19,7 @@ import wtf.liempo.pregnancy.Game.Companion.GAME_HEIGHT
 import wtf.liempo.pregnancy.Game.Companion.GAME_WIDTH
 import wtf.liempo.pregnancy.breakout.BreakoutUtils.translate
 import kotlin.experimental.or
+import kotlin.random.Random
 
 class BreakoutScreen(private val game: Game):
         KtxScreen, InputAdapter() {
@@ -34,6 +33,7 @@ class BreakoutScreen(private val game: Game):
 
     // Box2D attributes
     private val world = createWorld(vec2(y = -9.8f))
+    private val contacts = BreakoutContactListener()
     private val renderer = Box2DDebugRenderer()
     private var accumulator = 0f
 
@@ -49,6 +49,7 @@ class BreakoutScreen(private val game: Game):
             // Center to the game screen
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT / 2))
+            fixedRotation = false
 
             // Set this body's user data to sprite
             val texture: Texture = game.assets[TEXTURE_BALL]
@@ -59,21 +60,24 @@ class BreakoutScreen(private val game: Game):
             }
 
             circle(radius) {
+                userData = ID_BALL
                 restitution = 1f
-                density = 0.2f
+                density = 0.1f
                 friction = 0f
                 filter {
-                    categoryBits = BIT_BALL
-                    maskBits = BIT_PADDLE or BIT_WALL
+                    categoryBits = ID_BALL
+                    maskBits = ID_PADDLE or ID_WALL
                 }
             }
-        }.also {
-            // Create initial force for the ball
-            val impulse = vec2(0f, translate(-512f))
-            val point = vec2(translate(GAME_WIDTH / 2),
-                    translate(GAME_HEIGHT / 2))
-            it.applyLinearImpulse(impulse, point, true)
-        }
+       }.also {
+           // Create initial force for the ball
+           val factor = if (Random.nextBoolean()) 1 else -1
+           val impulse = vec2(translate(64f) * factor,
+                   translate(-512f))
+           val point = vec2(translate(GAME_WIDTH / 2),
+                   translate(GAME_HEIGHT / 2))
+           it.applyLinearImpulse(impulse, point, true)
+       }
     }
 
     private fun createPaddle() {
@@ -92,12 +96,13 @@ class BreakoutScreen(private val game: Game):
             }
 
             box(width, height) {
+                userData = ID_PADDLE
                 restitution = 0.5f
                 density = 0.5f
                 friction = 0.4f
                 filter {
-                    categoryBits = BIT_PADDLE
-                    maskBits = BIT_BALL or BIT_WALL
+                    categoryBits = ID_PADDLE
+                    maskBits = ID_BALL or ID_WALL
                 }
             }
         }
@@ -110,9 +115,6 @@ class BreakoutScreen(private val game: Game):
         val offsetX = (width / 2) + // <--- We add this because box2d draw from center
                 (translate(GAME_WIDTH) - (columns * width)) / 2
         val offsetY = translate(GAME_HEIGHT * 0.95f)
-
-        println("offsetX = $offsetX")
-        println("offsetY = $offsetY")
 
         for (i in 0 until rows) {
             for (j in 0 until columns) {
@@ -130,12 +132,13 @@ class BreakoutScreen(private val game: Game):
                     }
 
                     box(width, height) {
+                        userData = ID_BRICK
                         restitution = 0.1f
                         density = 10f
                         friction = 0.4f
                         filter {
-                            categoryBits = BIT_BRICK
-                            maskBits = BIT_BALL
+                            categoryBits = ID_BRICK
+                            maskBits = ID_BALL
                         }
                     }
                 }
@@ -150,6 +153,7 @@ class BreakoutScreen(private val game: Game):
             world.body(BodyDef.BodyType.StaticBody) {
                 // Create the shape and fixture
                 edge(edge.start, edge.end) {
+                    userData = if (edge.name == "FLOOR") ID_FLOOR else ID_WALL
                     density = 1f
                     restitution = 1f
                     friction = 100f
@@ -159,11 +163,11 @@ class BreakoutScreen(private val game: Game):
                         // Set a different category bit for
                         // FLOOR so a ball could pass through
                         if (edge.name == "FLOOR") {
-                            categoryBits = BIT_FLOOR
-                            maskBits = BIT_PADDLE
+                            categoryBits = ID_FLOOR
+                            maskBits = ID_PADDLE
                         } else {
-                            categoryBits = BIT_WALL
-                            maskBits = BIT_BALL or BIT_PADDLE
+                            categoryBits = ID_WALL
+                            maskBits = ID_BALL or ID_PADDLE
                         }
                     }
                 }
@@ -190,6 +194,7 @@ class BreakoutScreen(private val game: Game):
         createWalls()
 
         // ---- MISCELLANEOUS STUFF ----
+        world.setContactListener(contacts)
         Gdx.input.inputProcessor = this
     }
 
@@ -217,8 +222,12 @@ class BreakoutScreen(private val game: Game):
                                 body.position.x,
                                 body.position.y)
                     }.draw(it)
-
                 }
+
+                // Remove bricks that has been hit
+                for (brick in contacts.bricksToRemove)
+                    world.destroyBody(brick)
+                contacts.bricksToRemove.clear()
             }
         }
 
@@ -256,11 +265,31 @@ class BreakoutScreen(private val game: Game):
         val centerX = translate(GAME_WIDTH) / 2
 
         // Determine whether paddle goes left or right
-        val speed = 512f * if (touchX >= centerX) 1 else -1
+        val speed = 768f * if (touchX >= centerX) 1 else -1
 
         // Move the paddle with created velocity
         paddle.linearVelocity = vec2(x = translate(speed))
         return true
+    }
+
+    inner class BreakoutContactListener: ContactListener {
+
+        // Create a list of bricks to remove on game
+        internal val bricksToRemove = gdxArrayOf<Body>()
+
+        override fun beginContact(contact: Contact?) {
+            contact?.run {
+                // Remove brick here
+                if (fixtureA.userData == ID_BRICK)
+                    bricksToRemove.add(fixtureA.body)
+                if (fixtureB.userData == ID_BRICK)
+                    bricksToRemove.add(fixtureB.body)
+            }
+        }
+
+        override fun endContact(contact: Contact?) {}
+        override fun preSolve(contact: Contact?, oldManifold: Manifold?) {}
+        override fun postSolve(contact: Contact?, impulse: ContactImpulse?) {}
     }
 
     companion object {
@@ -269,13 +298,15 @@ class BreakoutScreen(private val game: Game):
         private const val VELOCITY_ITERATIONS = 6
         private const val POSITION_ITERATIONS = 2
 
-        // Category bits for collision filtering
+        // These variables will be used for:
+        //  - Fixture IDs to determent on contact
+        //  - Category bits for collision filtering
         // Read more here https://bit.ly/2VArJdX
-        private const val BIT_WALL: Short = 2
-        private const val BIT_PADDLE: Short = 4
-        private const val BIT_FLOOR: Short = 6
-        private const val BIT_BALL: Short = 8
-        private const val BIT_BRICK: Short = 10
+        private const val ID_WALL: Short = 2
+        private const val ID_PADDLE: Short = 4
+        private const val ID_FLOOR: Short = 6
+        private const val ID_BALL: Short = 8
+        private const val ID_BRICK: Short = 10
 
         // This game's asset names (will be loaded on MainMenuScreen)
         internal const val TEXTURE_BALL = "breakout/ball.png"
