@@ -10,8 +10,8 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import com.badlogic.gdx.utils.viewport.FillViewport
+import ktx.actors.onClick
 import ktx.app.KtxScreen
-import ktx.assets.load
 import ktx.freetype.generateFont
 import ktx.graphics.use
 import ktx.scene2d.*
@@ -19,7 +19,7 @@ import ktx.style.label
 import ktx.style.skin
 import ktx.style.textButton
 import wtf.liempo.pregnancy.Game
-import wtf.liempo.pregnancy.breakout.BreakoutScreen
+import wtf.liempo.pregnancy.breakout.BreakoutUtils
 
 class MainMenuScreen(private val game: Game):
         KtxScreen, ClickListener() {
@@ -68,8 +68,12 @@ class MainMenuScreen(private val game: Game):
                 // Table children:
                 label("Pregnancy", style = "title")
                 row().pad(32f)
-                textButton("breakout")
-                        .addListener(this@MainMenuScreen)
+                textButton("breakout") {
+                    onClick { BreakoutUtils.show(game) }
+                }
+                textButton("catch") {
+
+                }
             }
         }
     }
@@ -85,17 +89,7 @@ class MainMenuScreen(private val game: Game):
 
     override fun clicked(event: InputEvent?, x: Float, y: Float) {
         // TODO determine which button from event
-        game.run {
-            assets.let {
-                it.load<Texture>(BreakoutScreen.TEXTURE_PADDLE)
-                it.load<Texture>(BreakoutScreen.TEXTURE_BRICK)
-                it.load<Texture>(BreakoutScreen.TEXTURE_BALL)
-                it.finishLoading()
-            }
 
-            removeScreen<MainMenuScreen>()
-            setScreen<BreakoutScreen>()
-        }
     }
 
     override fun resize(width: Int, height: Int) {
