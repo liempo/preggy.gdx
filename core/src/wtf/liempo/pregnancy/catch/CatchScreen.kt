@@ -5,9 +5,7 @@ import com.badlogic.gdx.InputAdapter
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Sprite
-import com.badlogic.gdx.physics.box2d.Body
-import com.badlogic.gdx.physics.box2d.BodyDef
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer
+import com.badlogic.gdx.physics.box2d.*
 import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
@@ -18,12 +16,14 @@ import ktx.graphics.use
 import ktx.math.vec2
 import ktx.math.vec3
 import wtf.liempo.pregnancy.Game
-import wtf.liempo.pregnancy.breakout.BreakoutScreen
 import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
 import wtf.liempo.pregnancy.utils.GameUtils
 import wtf.liempo.pregnancy.utils.GameUtils.translate
 import wtf.liempo.pregnancy.utils.SurroundingEdges
+import java.util.*
+import kotlin.concurrent.timerTask
 import kotlin.experimental.or
+import kotlin.random.Random
 
 class CatchScreen(private val game: Game):
         KtxScreen, InputAdapter() {
@@ -38,6 +38,8 @@ class CatchScreen(private val game: Game):
     // Box2D attributes
     private val world = createWorld(vec2(y = -9.8f))
     private val renderer = Box2DDebugRenderer()
+    private val contacts = BreakoutContactListener()
+
     private var accumulator = 0f
     private var isPaused = true
 
@@ -48,6 +50,8 @@ class CatchScreen(private val game: Game):
     private fun createWalls() {
         //  Iterate SurroundingEdges and create a body for it
         for (edge in SurroundingEdges.values()) {
+            if (edge.name == "CEILING") continue
+
             world.body(BodyDef.BodyType.StaticBody) {
                 // Create the shape and fixture
                 edge(edge.start, edge.end) {
@@ -111,7 +115,7 @@ class CatchScreen(private val game: Game):
                 friction = 0.4f
                 filter {
                     categoryBits = ID_GIRL
-                    maskBits = -1
+                    maskBits = ID_WALL or ID_CORRECT or ID_WRONG
                 }
             }
         }
@@ -119,13 +123,55 @@ class CatchScreen(private val game: Game):
 
     override fun show() {
         createGirl()
-        createWalls()
 
+        Timer().schedule(timerTask {
+
+            println("creating")
+            val correct = Random.nextBoolean()
+            val id = if (correct) ID_CORRECT else ID_WRONG
+
+            world.body(BodyDef.BodyType.DynamicBody) {
+                val width = translate(128f)
+                val height = translate(128f)
+
+                // 20 pixels above the game, no ceiling
+                position.set(
+                        translate(Game.GAME_WIDTH) * Random.nextFloat(),
+                        translate(Game.GAME_HEIGHT + 256f))
+
+                // Randomize the asset
+                val asset =  if (correct)
+                    randomCorrectAsset()
+                else randomWrongAsset()
+
+                // Set texture to sprite
+                val texture: Texture = game.assets[asset.path]
+                userData = Sprite(texture).apply {
+                    setSize(width, height)
+                    setOriginCenter()
+                }
+
+                box(width, height) {
+                    userData = id
+                    restitution = 0.5f
+                    density = 0.5f
+                    friction = 1f
+                    filter {
+                        categoryBits = id
+                        maskBits = ID_GIRL or ID_WALL
+                    }
+                }
+            }
+        }, 0, 1000)
+
+        createWalls()
+        world.setContactListener(contacts)
         Gdx.input.inputProcessor = this
     }
 
     override fun render(delta: Float) {
         // Render texture here
+
         game.run {
             // Extract assets to render
             val background: Texture = assets[Game.TEXTURE_BG]
@@ -135,6 +181,8 @@ class CatchScreen(private val game: Game):
                 it.draw(background, 0f, 0f,
                         translate(Game.GAME_WIDTH),
                         translate(Game.GAME_HEIGHT))
+
+
 
                 // Draw the sprites in the position of its bodies
                 val bodies = gdxArrayOf<Body>()
@@ -147,8 +195,14 @@ class CatchScreen(private val game: Game):
                         setOriginBasedPosition(
                                 body.position.x,
                                 body.position.y)
+                        rotation = body.transform.rotation
                     }.draw(it)
                 }
+
+                // Remove bricks that has been hit
+                for (brick in contacts.objectsToRemove)
+                    world.destroyBody(brick)
+                contacts.objectsToRemove.clear()
             }
         }
 
@@ -200,16 +254,42 @@ class CatchScreen(private val game: Game):
         return true
     }
 
+    inner class BreakoutContactListener : ContactListener {
+
+        // Create a list of objects to remove on game
+        internal val objectsToRemove = gdxArrayOf<Body>()
+
+        override fun beginContact(contact: Contact?) {
+            contact?.run {
+                // Remove brick here
+                if (fixtureA.userData == ID_WRONG || fixtureA.userData == ID_CORRECT)
+                    objectsToRemove.add(fixtureA.body)
+                if (fixtureB.userData == ID_WRONG || fixtureB.userData == ID_CORRECT)
+                    objectsToRemove.add(fixtureB.body)
+            }
+        }
+
+        override fun endContact(contact: Contact?) {}
+        override fun preSolve(contact: Contact?, oldManifold: Manifold?) {}
+        override fun postSolve(contact: Contact?, impulse: ContactImpulse?) {}
+    }
+
     enum class Assets(val path: String) {
         BEER("catch/beer.png"),
         CIGARETTE("catch/cigarette.png"),
         MILK("catch/milk.png"),
         WATER("catch/water.png"),
         JUICE("catch/juice.png"),
-        GIRL("catch/girl.png"),
+        GIRL("catch/girl.png");
     }
 
     companion object {
+
+        private fun randomCorrectAsset(): Assets =
+            listOf(Assets.MILK, Assets.WATER, Assets.JUICE).random()
+        private fun randomWrongAsset(): Assets =
+                listOf(Assets.CIGARETTE, Assets.BEER).random()
+
         internal fun show(game: Game) {
             with (game) {
                 assets.let {
