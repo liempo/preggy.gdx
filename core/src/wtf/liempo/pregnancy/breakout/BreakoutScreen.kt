@@ -346,7 +346,7 @@ class BreakoutScreen(private val game: Game) :
 
     companion object {
         internal fun show(game: Game) {
-            game.run {
+            with (game) {
                 assets.let {
                     for (asset in Assets.values())
                         game.assets.load<Texture>(asset.path)
