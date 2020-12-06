@@ -19,6 +19,7 @@ import wtf.liempo.pregnancy.Game
 import wtf.liempo.pregnancy.Game.Companion.GAME_HEIGHT
 import wtf.liempo.pregnancy.Game.Companion.GAME_WIDTH
 import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
+import wtf.liempo.pregnancy.utils.GameUtils
 import wtf.liempo.pregnancy.utils.GameUtils.translate
 import kotlin.experimental.or
 import kotlin.random.Random
@@ -280,11 +281,11 @@ class BreakoutScreen(private val game: Game) :
 
         // Step world code snippet (not sure what's going on here)
         accumulator += delta.coerceAtMost(0.25f)
-        if (accumulator >= TIME_STEP) {
-            accumulator -= TIME_STEP
-            world.step(TIME_STEP,
-                    VELOCITY_ITERATIONS,
-                    POSITION_ITERATIONS)
+        if (accumulator >= GameUtils.TIME_STEP) {
+            accumulator -= GameUtils.TIME_STEP
+            world.step(GameUtils.TIME_STEP,
+                    GameUtils.VELOCITY_ITERATIONS,
+                    GameUtils.POSITION_ITERATIONS)
         }
     }
 
@@ -358,11 +359,6 @@ class BreakoutScreen(private val game: Game) :
                 setScreen<BreakoutScreen>()
             }
         }
-
-        // World stepping variables
-        private const val TIME_STEP = 1f / 60f
-        private const val VELOCITY_ITERATIONS = 6
-        private const val POSITION_ITERATIONS = 2
 
         // These variables will be used for:
         //  - Fixture IDs to determent on contact
