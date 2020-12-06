@@ -21,7 +21,7 @@ import wtf.liempo.pregnancy.breakout.BreakoutUtils.translate
 import kotlin.experimental.or
 import kotlin.random.Random
 
-class BreakoutScreen(private val game: Game):
+class BreakoutScreen(private val game: Game) :
         KtxScreen, InputAdapter() {
 
     // Screen and camera management
@@ -36,13 +36,14 @@ class BreakoutScreen(private val game: Game):
     private val contacts = BreakoutContactListener()
     private val renderer = Box2DDebugRenderer()
     private var accumulator = 0f
+    private var isPaused = true
 
     // World bodies, the essential one
     private lateinit var ball: Body
     private lateinit var paddle: Body
 
     private fun createBall() {
-       ball = world.body(BodyDef.BodyType.DynamicBody) {
+        ball = world.body(BodyDef.BodyType.DynamicBody) {
             // Radius of the ball in meters
             val radius = translate(32f)
 
@@ -69,15 +70,7 @@ class BreakoutScreen(private val game: Game):
                     maskBits = ID_PADDLE or ID_WALL
                 }
             }
-       }.also {
-           // Create initial force for the ball
-           val factor = if (Random.nextBoolean()) 1 else -1
-           val impulse = vec2(translate(64f) * factor,
-                   translate(-512f))
-           val point = vec2(translate(GAME_WIDTH / 2),
-                   translate(GAME_HEIGHT / 2))
-           it.applyLinearImpulse(impulse, point, true)
-       }
+        }
     }
 
     private fun createPaddle() {
@@ -87,7 +80,7 @@ class BreakoutScreen(private val game: Game):
 
             // 10% above ground, and centered horizontally
             position.set(translate(GAME_WIDTH / 2),
-                    translate(GAME_HEIGHT * 0.20f))
+                    translate(GAME_HEIGHT * PADDLE_HEIGHT_PERCENT))
             // Set this body's user data to a sprite
             val texture: Texture = game.assets[TEXTURE_PADDLE]
             userData = Sprite(texture).apply {
@@ -109,7 +102,8 @@ class BreakoutScreen(private val game: Game):
     }
 
     private fun createBricks() {
-        val rows = 5; val columns = 12
+        val rows = 5
+        val columns = 12
         val width = translate(72)
         val height = translate(72)
         val offsetX = (width / 2) + // <--- We add this because box2d draw from center
@@ -186,12 +180,52 @@ class BreakoutScreen(private val game: Game):
         }
     }
 
+    private fun reset() {
+        with(ball) {
+            // Recenter the ball
+            setTransform(vec2(
+                    x = translate(GAME_WIDTH / 2),
+                    y = translate(GAME_HEIGHT / 2)), 0f)
+
+            // Stop it from moving
+            linearVelocity = vec2(0f, 0f)
+            angularVelocity = 0f
+
+            // Create initial force for the ball
+            val force = vec2(
+                    x =  translate(32f) *
+                            (if (Random.nextBoolean()) 1f else -1f),
+                    y = translate(-512f))
+            val point = vec2(
+                    x = translate(GAME_WIDTH / 2),
+                    y = translate(GAME_HEIGHT / 2))
+
+            println(force)
+            applyLinearImpulse(force, point, true)
+        }
+
+        with (paddle) {
+            // Recenter paddle
+            setTransform(vec2(
+                    x = translate(GAME_WIDTH / 2),
+                    y = translate(GAME_HEIGHT *
+                            PADDLE_HEIGHT_PERCENT)), 0f)
+
+            // Stop it from moving
+            linearVelocity = vec2(0f, 0f)
+            angularVelocity = 0f
+        }
+
+        isPaused = true // Unpause onTouchDown
+    }
+
     override fun show() {
         // ---- SETUP WORLD BODIES ----
         createBall()
         createPaddle()
         createBricks()
         createWalls()
+        reset()
 
         // ---- MISCELLANEOUS STUFF ----
         world.setContactListener(contacts)
@@ -209,6 +243,9 @@ class BreakoutScreen(private val game: Game):
                 it.draw(background, 0f, 0f,
                         translate(GAME_WIDTH),
                         translate(GAME_HEIGHT))
+
+                // Check if ball got out of bounds
+                if (ball.position.y < 0) reset()
 
                 // Draw the sprites in the position of its bodies
                 val bodies = gdxArrayOf<Body>()
@@ -234,6 +271,11 @@ class BreakoutScreen(private val game: Game):
         // Render the Box2D debugger
         renderer.render(world, camera.combined)
 
+        // Make delta (from param) var by name shadowing it
+        @Suppress("NAME_SHADOWING") var delta = delta
+        // Set delta to zero if isPaused
+        if (isPaused) delta = 0f
+
         // Step world code snippet (not sure what's going on here)
         accumulator += delta.coerceAtMost(0.25f)
         if (accumulator >= TIME_STEP) {
@@ -257,6 +299,8 @@ class BreakoutScreen(private val game: Game):
 
     override fun touchDown(screenX: Int, screenY: Int,
                            pointer: Int, button: Int): Boolean {
+        if (isPaused) { isPaused = false; return true }
+
         // Get world space coordinates (in meters) and extract X
         val touchX = camera.unproject(vec3(
                 x = screenX.toFloat(),
@@ -265,14 +309,14 @@ class BreakoutScreen(private val game: Game):
         val centerX = translate(GAME_WIDTH) / 2
 
         // Determine whether paddle goes left or right
-        val speed = 768f * if (touchX >= centerX) 1 else -1
+        val speed = 1080f * if (touchX >= centerX) 1 else -1
 
         // Move the paddle with created velocity
         paddle.linearVelocity = vec2(x = translate(speed))
         return true
     }
 
-    inner class BreakoutContactListener: ContactListener {
+    inner class BreakoutContactListener : ContactListener {
 
         // Create a list of bricks to remove on game
         internal val bricksToRemove = gdxArrayOf<Body>()
@@ -312,5 +356,8 @@ class BreakoutScreen(private val game: Game):
         internal const val TEXTURE_BALL = "breakout/ball.png"
         internal const val TEXTURE_PADDLE = "breakout/paddle.png"
         internal const val TEXTURE_BRICK = "breakout/brick.png"
+
+        // Box2D bodies' constants
+        private const val PADDLE_HEIGHT_PERCENT = 0.10f
     }
 }

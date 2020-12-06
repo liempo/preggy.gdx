@@ -14,8 +14,8 @@ enum class SurroundingEdges(
             end = vec2(translate(Game.GAME_WIDTH), translate(Game.GAME_HEIGHT)),
     ),
     FLOOR(
-            start = vec2(0f, translate(Game.GAME_HEIGHT * 0.10f)),
-            end = vec2(translate(Game.GAME_WIDTH), translate(Game.GAME_HEIGHT * 0.10f)),
+            start = vec2(0f, 0f),
+            end = vec2(translate(Game.GAME_WIDTH), 0f),
     ),
     LEFT(
             start = vec2(0f, 0f),
