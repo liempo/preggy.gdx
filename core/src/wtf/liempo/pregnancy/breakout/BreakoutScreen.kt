@@ -9,6 +9,7 @@ import com.badlogic.gdx.physics.box2d.*
 import com.badlogic.gdx.physics.box2d.joints.PrismaticJointDef
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.app.KtxScreen
+import ktx.assets.load
 import ktx.box2d.*
 import ktx.collections.gdxArrayOf
 import ktx.graphics.use
@@ -17,7 +18,8 @@ import ktx.math.vec3
 import wtf.liempo.pregnancy.Game
 import wtf.liempo.pregnancy.Game.Companion.GAME_HEIGHT
 import wtf.liempo.pregnancy.Game.Companion.GAME_WIDTH
-import wtf.liempo.pregnancy.breakout.BreakoutUtils.translate
+import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
+import wtf.liempo.pregnancy.utils.GameUtils.translate
 import kotlin.experimental.or
 import kotlin.random.Random
 
@@ -53,7 +55,7 @@ class BreakoutScreen(private val game: Game) :
             fixedRotation = false
 
             // Set this body's user data to sprite
-            val texture: Texture = game.assets[TEXTURE_BALL]
+            val texture: Texture = game.assets[Assets.BALL.path]
             userData = Sprite(texture).apply {
                 setSize(radius * 2f,
                         radius * 2f)
@@ -82,7 +84,7 @@ class BreakoutScreen(private val game: Game) :
             position.set(translate(GAME_WIDTH / 2),
                     translate(GAME_HEIGHT * PADDLE_HEIGHT_PERCENT))
             // Set this body's user data to a sprite
-            val texture: Texture = game.assets[TEXTURE_PADDLE]
+            val texture: Texture = game.assets[Assets.PADDLE.path]
             userData = Sprite(texture).apply {
                 setSize(width, height)
                 setOriginCenter()
@@ -119,7 +121,7 @@ class BreakoutScreen(private val game: Game) :
                 world.body(BodyDef.BodyType.StaticBody) {
                     position.set(x, y)
 
-                    val texture: Texture = game.assets[TEXTURE_BRICK]
+                    val texture: Texture = game.assets[Assets.BRICK.path]
                     userData = Sprite(texture).apply {
                         setSize(width, height)
                         setOriginCenter()
@@ -336,7 +338,27 @@ class BreakoutScreen(private val game: Game) :
         override fun postSolve(contact: Contact?, impulse: ContactImpulse?) {}
     }
 
+    enum class Assets(val path: String) {
+        BALL("breakout/ball.png"),
+        PADDLE("breakout/paddle.png"),
+        BRICK("breakout/brick.png");
+    }
+
     companion object {
+        internal fun show(game: Game) {
+            game.run {
+                assets.let {
+                    for (asset in Assets.values())
+                        game.assets.load<Texture>(asset.path)
+
+                    it.finishLoading()
+                }
+
+                removeScreen<MainMenuScreen>()
+                setScreen<BreakoutScreen>()
+            }
+        }
+
         // World stepping variables
         private const val TIME_STEP = 1f / 60f
         private const val VELOCITY_ITERATIONS = 6
@@ -351,11 +373,6 @@ class BreakoutScreen(private val game: Game) :
         private const val ID_FLOOR: Short = 6
         private const val ID_BALL: Short = 8
         private const val ID_BRICK: Short = 10
-
-        // This game's asset names (will be loaded on externally)
-        internal const val TEXTURE_BALL = "breakout/ball.png"
-        internal const val TEXTURE_PADDLE = "breakout/paddle.png"
-        internal const val TEXTURE_BRICK = "breakout/brick.png"
 
         // Box2D bodies' constants
         private const val PADDLE_HEIGHT_PERCENT = 0.10f

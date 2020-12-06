@@ -6,9 +6,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
-import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener
 import com.badlogic.gdx.utils.viewport.FillViewport
 import ktx.actors.onClick
 import ktx.app.KtxScreen
@@ -19,10 +17,9 @@ import ktx.style.label
 import ktx.style.skin
 import ktx.style.textButton
 import wtf.liempo.pregnancy.Game
-import wtf.liempo.pregnancy.breakout.BreakoutUtils
+import wtf.liempo.pregnancy.breakout.BreakoutScreen
 
-class MainMenuScreen(private val game: Game):
-        KtxScreen, ClickListener() {
+class MainMenuScreen(private val game: Game): KtxScreen {
 
     private val camera = OrthographicCamera()
     private val viewport = FillViewport(
@@ -69,7 +66,7 @@ class MainMenuScreen(private val game: Game):
                 label("Pregnancy", style = "title")
                 row().pad(32f)
                 textButton("breakout") {
-                    onClick { BreakoutUtils.show(game) }
+                    onClick { BreakoutScreen.show(game) }
                 }; row()
                 textButton("catch") {
 
@@ -85,11 +82,6 @@ class MainMenuScreen(private val game: Game):
 
         stage.act()
         stage.draw()
-    }
-
-    override fun clicked(event: InputEvent?, x: Float, y: Float) {
-        // TODO determine which button from event
-
     }
 
     override fun resize(width: Int, height: Int) {

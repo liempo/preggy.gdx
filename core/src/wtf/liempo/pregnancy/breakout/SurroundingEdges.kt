@@ -3,7 +3,7 @@ package wtf.liempo.pregnancy.breakout
 import com.badlogic.gdx.math.Vector2
 import ktx.math.vec2
 import wtf.liempo.pregnancy.Game
-import wtf.liempo.pregnancy.breakout.BreakoutUtils.translate
+import wtf.liempo.pregnancy.utils.GameUtils.translate
 
 enum class SurroundingEdges(
         val start: Vector2,
