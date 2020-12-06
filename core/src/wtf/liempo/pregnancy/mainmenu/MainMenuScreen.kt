@@ -18,6 +18,7 @@ import ktx.style.skin
 import ktx.style.textButton
 import wtf.liempo.pregnancy.Game
 import wtf.liempo.pregnancy.breakout.BreakoutScreen
+import wtf.liempo.pregnancy.catch.CatchScreen
 
 class MainMenuScreen(private val game: Game): KtxScreen {
 
@@ -69,7 +70,7 @@ class MainMenuScreen(private val game: Game): KtxScreen {
                     onClick { BreakoutScreen.show(game) }
                 }; row()
                 textButton("catch") {
-
+                    onClick { CatchScreen.show(game) }
                 }
             }
         }
