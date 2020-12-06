@@ -21,6 +21,7 @@ import wtf.liempo.pregnancy.Game.Companion.GAME_WIDTH
 import wtf.liempo.pregnancy.mainmenu.MainMenuScreen
 import wtf.liempo.pregnancy.utils.GameUtils
 import wtf.liempo.pregnancy.utils.GameUtils.translate
+import wtf.liempo.pregnancy.utils.SurroundingEdges
 import kotlin.experimental.or
 import kotlin.random.Random
 

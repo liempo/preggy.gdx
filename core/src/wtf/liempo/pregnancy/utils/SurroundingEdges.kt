@@ -1,4 +1,4 @@
-package wtf.liempo.pregnancy.breakout
+package wtf.liempo.pregnancy.utils
 
 import com.badlogic.gdx.math.Vector2
 import ktx.math.vec2
